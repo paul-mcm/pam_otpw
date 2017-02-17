@@ -1,9 +1,11 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "ldap_call.h"
@@ -12,7 +14,7 @@
 
 int send_code(const char *);
 int load_config(struct configuration *);
-int sendmail(const char *, const char *, const char *);
+int sendmail(const char *, const char *);
 
 /*
  * Loads config from pam_ldap.conf, does LDAP query 
@@ -29,6 +31,12 @@ int send_code(const char *user)
         struct configuration config;
         struct configuration *cfg_ptr = &config;
 	char *default_config = "/etc/pam_ldap.conf";
+	char hostname[MAXHOSTNAMELEN];
+
+	if (gethostname(hostname, MAXHOSTNAMELEN) == -1) {
+	    log_ret("Failed to determine hostname");
+	    strcpy(hostname, "unkown host");
+	}
 #ifdef BSD
 	uint32_t n_code;
 #else
@@ -107,7 +115,7 @@ int send_code(const char *user)
 
 	if (n_code >= 0) {
 	    r = snprintf(n_string, 7, "%06d", n_code);
-	    if ((r = sendmail(uinfo.smsgateway, uinfo.email, n_string)) < 0) {
+	    if ((r = sendmail(uinfo.smsgateway, n_string)) < 0) {
 		log_msg(LOG_INFO, "%s\n", "Email error");
 		goto fail;
 	    }
@@ -142,7 +150,7 @@ int load_config(struct configuration *c)
         return 0;
 }
 
-int sendmail(const char *to, const char *from, const char *code)
+int sendmail(const char *to, const char *code)
 {
 	int retval = -1;
 	char msg_str[32] = "Pass Code -- ";
@@ -153,7 +161,7 @@ int sendmail(const char *to, const char *from, const char *code)
 
 	if (mailpipe != NULL) {
 	    fprintf(mailpipe, "To: %s\n", to);
-	    fprintf(mailpipe, "From: %s\n\n", from);
+	    fprintf(mailpipe, "From: PAMOTPW\n");
 	    fwrite(msg, 1, strlen(msg), mailpipe);
 	    fwrite("\n.\n", 1, 2, mailpipe);
 	    pclose(mailpipe);
