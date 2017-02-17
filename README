@@ -1,0 +1,181 @@
+CONTENTS
+==========
+I.	INTRO
+II.	IMPLEMENTATION DETAILS
+III.	INSTALLATION
+IV.	CONFIGURATION
+V.	LDAP CONFIGURATION
+VI.	SSHD CONFIGURATION FOR 2 FACTOR AUTHENTICATION
+VII.	THE mobileCarrier OBJECT CLASS
+VIII.	ADDITIONAL NOTES
+IX.	CAVEATS
+
+
+I. INTRO
+--------
+pam_otpw is a PAM module written to create and send a one-time
+password for user authentication.  It was written specifically to work
+together with the OpenSSH server daemon, sshd(8), to provide 2-factor
+authentication for host logins. 
+
+The module can also be used with other tools that use PAM for
+authentication, though it has only been tested with sshd(8). 
+
+pam_otpw is compiled as a shared library, pam_otpw.so, that can be
+placed into the PAM authentication stack where it will be called as
+part of a program's authentication mechanism. 
+
+pam_otpw sends an SMS text message containing a one-time password to
+the user's mobile device using their mobile carrier's SMS Gateway
+domain and the SMTP protocol.
+
+Users' SMS Gateway addresses must be stored in their LDAP entries in
+an LDAP directory.  This repo includes a file that defines an LDAP
+object class which may be used for this purpose.
+
+
+II. IMPLEMENTATION DETAILS
+---------------------------
+Passwords consist of a 6-digit string, derived from a randomly
+generated number; The value will never be reused - it will be valid
+only once for the lifetime of the user on that host.
+
+6 digits constrains the range of possible values to be between 0 to
+999999.  If the number generated has fewer than 6-digits, then leading
+zeros will be prepended to the value until it becomes a string of 6
+numbers (e.g., the number `75' becomes the string `000075').
+
+Since each value can never be used more than once, the module must
+maintain a record of values previously sent to the user.
+
+For each user attempting to authenticate the module creates a file
+with a length of 125000 bytes under /var/lib/pam_otpw/.  This file is
+used as a bit-map, where the offset of each bit records numbers
+previously used.  For example, if the bit at offset `n' is set, then
+the number `n' has already been used; if not set, then the number
+hasn't be used. 
+
+The module will iterate, regenerating random numbers, until it has one
+that maps to bit that isn't set.  When found, the bit at that offset
+will be set, and the number sent to the user. 
+
+When the authentication function in pam_otpw.so is called, it reads
+the /etc/pam_ldap.conf config file, using those values to query the
+LDAP directory for the `smsGateway' attribute in the user's directory
+entry.  It then sends the password value to the SMS Gateway and
+prompts the user to input value. 
+
+The user is allowed 3 attempts to input the correct value.
+
+When used in conjunction with SSH, the sshd(8) daemon controls the
+timeout for both input operations (password and 6-digit string).  It
+also controls the max number of attempts to input credentials before
+terminating the connection. 
+
+
+III. INSTALLATION
+------------------
+1.   The pam_otpw module requires libldap and related libraries from the
+     OpenLDAP project (http://www.openldap.org).  Your system most likely
+     has a package that installs these libraries.
+
+2.   To compile the pam_otpw module, gcc and GNU make are required.  Also,
+     the following header files must be present on your system:
+
+	ldap.h
+	pam_appl.h
+	pam_modules.h
+	pam_ext.h
+
+     On Linux systems, these are usually contained in a developer package for 
+     pam and ldap.
+
+3.   cd to the src/ directory and run:
+
+	make mod
+
+     and as a privileged user 
+
+        make install
+
+     (on BSDs, use gmake);     
+
+     If all goes well, the shared library pam_otpw.so will be installed in /etc/pam.d/
+
+4.   The pam_otpw modules expects 
+
+
+
+IV. CONFIGURATION
+------------------
+The pam configuration file(s) must be modified to use the pam_otpw.so
+library.  The module should use the 'auth' type management group.  See
+pam.conf(5).
+
+The repo includes the PAM config file `sshd' which has been used
+successfully on a Centos 7.1 system for SSH authentication.
+
+
+V. LDAP CONFIGURATION
+----------------------
+The pam_otpw module searches the LDAP directory for a DN with the uid
+attribute that matches the username being queried.  This typically
+requires LDAP entries to use either the posixAccount or inetOrgPerson
+object class. 
+
+The user's SMS Gateway is expected to be a value assigned to the
+smsGateway attribute in a user's LDAP entry.  The file
+mobileCarrier.schema defines the mobileCarrierData object class with
+the smsGateway attribute. 
+
+To use the mobileCarrier object class with OpenLDAP's slapd server,
+copy the file mobileCarrierData.schema to OpenLDAP's schema directory
+and configure slapd to include the new object class (see
+slapd.conf(5)). 
+
+See the next section for more information on the mobileCarrer object
+class.
+
+
+VI. SSHD CONFIGURATION FOR 2-FACTOR AUTHENTICATION
+----------------------------------------------------
+For ssh set the keys `ChallengeResponseAuthentication' to `yes' (the
+default). See sshd_config(5).
+
+
+VII. The mobileCarrier Object Class
+-------------------------------------
+The mobileCarrier object class provided with getpk tools defines 4 attributes:
+
+smsGateway		The SMS Gateway: an email address consisting of the user's
+			mobile number and their mobile carrier's SMS Gate Domain.
+			E.g., 1234567890@txt.att.net
+msisdn			The user's mobile phone number. Conforms to rfc4517, Section 3.3.31
+mobileCarrier		The mobile carrier (e.g., at&t, tmobile, etc)
+smsGateDomain		Email domain for mobile carriers SMS gateway 
+			(e.g., txt.att.net, vtext.com)
+
+
+VIII. CAVEATS
+-------------
+
+1. The NIST is no longer recommends using SMS for 2 factor
+authentication:
+
+"Out-of-band authentication using the PSTN (SMS or voice) is
+discouraged and is being considered for removal in future editions of
+this guideline."
+
+See https://pages.nist.gov/800-63-3/sp800-63b.html, Section 5
+
+2.  The format of the SMS text message is largely beyond control of
+the PAM module.  Different carriers will format the messages
+differently.
+
+3. SMS messages sent via SMTP may not be received immediately.  Delays
+can occur.  This can be a problem if applications expect confirmation
+of authentication within a time interval less than the time required
+to deliver the SMS message. 
+
+
+
