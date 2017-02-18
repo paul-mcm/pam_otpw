@@ -20,7 +20,7 @@ int sendmail(const char *, const char *);
 
 /*
  * Loads config from pam_ldap.conf, does LDAP query 
- * and sends email to smsGateway
+ * and sends email to smsGateAddr
  */
 int send_code(const char *user)
 {
@@ -63,7 +63,7 @@ int send_code(const char *user)
 
 	free_config(cfg_ptr);
 
-	if (uinfo.smsgateway == NULL || uinfo.email == NULL) {
+	if (uinfo.smsgateaddr == NULL || uinfo.email == NULL) {
 	    log_msg("Insufficient data for %s", user);
 	    goto fail;
 	}
@@ -111,7 +111,7 @@ int send_code(const char *user)
 
 	if (n_code >= 0) {
 	    r = snprintf(n_string, 7, "%06d", n_code);
-	    if ((r = sendmail(uinfo.smsgateway, n_string)) < 0) {
+	    if ((r = sendmail(uinfo.smsgateaddr, n_string)) < 0) {
 		log_msg(LOG_INFO, "%s\n", "Email error");
 		goto fail;
 	    }
