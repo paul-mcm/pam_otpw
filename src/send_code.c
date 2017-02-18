@@ -7,6 +7,8 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#include <bsd/stdlib.h>
+
 #include "config.h"
 #include "ldap_call.h"
 
@@ -37,11 +39,9 @@ int send_code(const char *user)
 	    log_ret("Failed to determine hostname");
 	    strcpy(hostname, "unkown host");
 	}
-#ifdef BSD
+
 	uint32_t n_code;
-#else
-	long int n_code;
-#endif
+
 	cfg_ptr->config_file = default_config;
 
 	if (load_config(cfg_ptr) != 0) {
@@ -80,13 +80,9 @@ int send_code(const char *user)
 	}
 
 	while (1) {
-#ifdef BSD
+
 	    n_code = arc4random_uniform(MAXRAND);
-#else
-	    /* XXX NEEDS BETTER SEEDING */
-	    srandom(time(NULL));
-	    n_code = random() % MAXRAND;
-#endif
+
 	    byte_offset = n_code / 8;
 	    bit_offset = n_code % 8;
 

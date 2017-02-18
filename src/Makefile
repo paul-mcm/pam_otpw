@@ -2,10 +2,7 @@ MODULE := pam_otpw.so
 BITFILE_DIR := /var/lib/pam_otpw
 UNAME := $(shell uname)
 
-ifeq ($(UNAME), OpenBSD)
- 	OS := BSD
-
-else ifeq ($(UNAME), Linux)
+ifeq ($(UNAME), Linux)
         OS := LINUX
 
         ifneq ("$(wildcard /etc/debian_version)", "")
@@ -32,7 +29,7 @@ ldap_call.o: ldap_call.h
 send_code.o:
 	@gcc -fPIC -D ${OS} -I${includes} -L${libs} -g -lldap -c -o send_code.o send_code.c
 mod: $(objects)
-	@gcc -fPIC -DPIC -shared -rdynamic -D ${OS} -I${includes} -L${libs} ${objects} -g -lldap -o ${MODULE} pam_otpw.c
+	@gcc -fPIC -DPIC -shared -rdynamic -D ${OS} -I${includes} -L${libs} ${objects} -g -lldap -lbsd -o ${MODULE} pam_otpw.c
 	@rm *.o 2> /dev/null || true
 
 install:
