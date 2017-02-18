@@ -14,7 +14,7 @@ Attributetype ( 1.3.6.1.4.1.49105.500.1.2.3
     NAME 'mobileCarrier'
     DESC 'Mobile network carrier'
     EQUALITY caseIgnoreMatch
-    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{256} )
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.144{256} )
 
 Attributetype ( 1.3.6.1.4.1.49105.500.1.2.4
     NAME 'smsGateDomain'
