@@ -14,23 +14,22 @@ IX.	CAVEATS
 I. INTRO
 --------
 
-pam_otpw is a PAM module that generates random 6 digit string, sends it
-as a SMS text message to a user's mobile device, and prompts the user to
-input the string for verification.  The 6 digit string will never be
-reused - it is valid only once for the lifetime of the user on that
-host.
+pam_otpw is a PAM module that generates random 6 digit string, sends
+it as a SMS text message to a user's mobile device, and prompts the
+user to input the string for verification.  The 6 digit string will
+never be reused - it is valid only once for the lifetime of the user
+on that host. 
 
 The pam_otpw module was written specifically to work together with the
 OpenSSH server daemon, sshd(8), to provide 2-factor authentication for
 host logins.  It can also be used by other PAM-aware applications,
 though it has only been tested with sshd(8).
 
-The 6 digit string is sent as a SMS text message using the mobile
-carrier's SMS Gateway domain and the SMTP protocol.
-
-Users' SMS Gateway addresses must be stored in their LDAP directory
-entries.  This repo includes a file that defines an LDAP object class
-which may be used for this purpose.
+The SMS text message with the 6 digit string is sent using the mobile
+carrier's SMS Gateway domain and the SMTP protocol.  Users' SMS
+Gateway addresses must be stored in their LDAP directory entries.
+This repo includes a file that defines an LDAP object class which may
+be used for this purpose.
 
 pam_otpw is compiled as a shared library, pam_otpw.so, that is placed
 into the PAM framework's `auth' stack.
@@ -82,13 +81,17 @@ III. REQUIREMENTS
      OpenLDAP project (http://www.openldap.org).  Your system most likely
      has a package that installs these libraries.
 
-2.   To compile the module, gcc and GNU make are required.  Also,
+2.   The arc4random_uniform(3) function, used for random number generation,
+     requires libbsd on Linux systems (https://libbsd.freedesktop.org/wiki/).
+
+3.   To compile the module, gcc and GNU make are required.  Also,
      the following header files must exist on your system:
 
 	ldap.h
 	pam_appl.h
 	pam_modules.h
 	pam_ext.h
+	bsd/stdlib.h (Linux only)
 
 3.  pam_otpw requires the file /etc/pam_ldap.conf.  This file is
     normally used by (and installed together with) the PAM module
@@ -163,6 +166,14 @@ class.
 VII. SSHD CONFIGURATION FOR 2-FACTOR AUTHENTICATION
 ----------------------------------------------------
 
+The following options should be set in sshd_config(5).
+
+	ChallengeResponseAuthentication yes (the default)
+	PasswordAuthentication 		no
+	UsePAM 				yes (the default)				)
+
+The setting for PasswordAuthentication is not required, but a
+recommendation.  See the manpage for sshd_config(5).
 
 VIII. The mobileCarrier Object Class
 -------------------------------------
