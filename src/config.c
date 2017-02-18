@@ -207,6 +207,6 @@ void free_config(struct configuration *c)
 void free_uidinfo(struct uid_info *u)
 {
 	free(u->uid);
-	free(u->smsgateway);
+	free(u->smsgateaddr);
 	free(u->email);
 };

@@ -15,7 +15,7 @@
 
 struct uid_info {
 	char *uid;
-	char *smsgateway;
+	char *smsgateaddr;
 	char *email;
 };
 

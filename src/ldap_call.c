@@ -96,7 +96,7 @@ int ldap_query2(struct configuration *c, struct uid_info *u)
 	char				*from_addr;
 	int				r, i;
 	char				fltr_str[LOGIN_NAME_MAX + 4] = "uid=";
-	char				*attrs[] = { "smsGateway", "mail", '\0' };
+	char				*attrs[] = { "smsGateAddr", "mail", '\0' };
 
 #ifdef BSD
 	strlcat(fltr_str, u->uid, sizeof(fltr_str));
@@ -117,7 +117,7 @@ int ldap_query2(struct configuration *c, struct uid_info *u)
 	    entry = ldap_first_entry(ldap, msg);
 
 	    if ((vals = ldap_get_values_len(ldap, entry, attrs[0])) != NULL) 
-		u->smsgateway = strndup(vals[0]->bv_val, 32);
+		u->smsgateaddr = strndup(vals[0]->bv_val, 32);
 
 	    if ((vals = ldap_get_values_len(ldap, entry, attrs[1])) != NULL)
 		u->email = strndup(vals[0]->bv_val, 256);
