@@ -25,11 +25,10 @@ OpenSSH server daemon, sshd(8), to provide 2-factor authentication for
 host logins.  It can also be used by other PAM-aware applications,
 though it has only been tested with sshd(8).
 
-The SMS text message with the 6 digit string is sent using the mobile
-carrier's SMS Gateway domain and the SMTP protocol.  Users' SMS
-Gateway addresses must be stored in their LDAP directory entries.
-This repo includes a file that defines an LDAP object class which may
-be used for this purpose.
+The SMS text message is sent using the mobile carrier's SMS Gateway
+domain and the SMTP protocol.  Users' SMS Gateway addresses must be
+stored in their LDAP directory entries.  This repo includes a file
+that defines an LDAP object class which may be used for this purpose.
 
 pam_otpw is compiled as a shared library, pam_otpw.so, that is placed
 into the PAM framework's `auth' stack.
@@ -68,7 +67,8 @@ See section III.  `REQUIREMENTS' and section IV. `CONFIGURATION' for
 more information.
 
 The user is allowed 3 attempts to input the 6 digit string correctly.
-On failure, the error PAM_AUTH_ERR is returned to the calling function.
+On failure, the error PAM_AUTH_ERR is returned to the calling
+function/application.
 
 When used in conjunction with SSH, the sshd(8) daemon controls the
 timeout for both input operations (user password and 6-digit string).

@@ -13,17 +13,17 @@ Attributetype ( 1.3.6.1.4.1.49105.500.1.2.2
 Attributetype ( 1.3.6.1.4.1.49105.500.1.2.3
     NAME 'mobileCarrier'
     DESC 'Mobile network carrier'
-    EQUALITY caseIgnoreMatch
-    SYNTAX 1.3.6.1.4.1.1466.115.121.1.144{256} )
+    EQUALITY caseIgnoreIA5Match
+    SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{256} )
 
 Attributetype ( 1.3.6.1.4.1.49105.500.1.2.4
     NAME 'smsGateDomain'
     DESC 'SMS Gateway domain'
-    EQUALITY caseIgnoreMatch
+    EQUALITY caseIgnoreIA5Match
     SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{256} )
 
 ObjectClass ( 1.3.6.1.4.1.49105.500.1.2.0
-    NAME 'mobileCarrierData' 
+    NAME 'mobileCarrierData'
     SUP top AUXILIARY
     DESC 'Mobile Phone Carrier Data'
     MAY ( smsGateAddr $ msisdn $ mobileCarrier $ smsGateDomain ))
